@@ -21,14 +21,6 @@ st.set_page_config(
 
 apply_custom_styles()
 
-def render_header():
-    st.markdown("""
-    <div class="main-header">NFL Play Intelligence System</div>
-    <div class="main-subtitle">
-        Machine Learning-Powered Play Calling Intelligence • Powered by Real NFL Data
-    </div>
-    """, unsafe_allow_html=True)
-
 def render_sidebar():
     with st.sidebar:
         st.markdown('<div class="sidebar-title">Navigation</div>', unsafe_allow_html=True)
@@ -63,34 +55,14 @@ def render_sidebar():
             st.markdown('<span class="status-indicator status-success"></span>**Model:** Ready', unsafe_allow_html=True)
             st.markdown('<span class="status-indicator status-success"></span>**Data:** Loaded', unsafe_allow_html=True)
         else:
-            st.markdown('<span class="status-indicator status-warning"></span>**Model:** Training...', unsafe_allow_html=True)
-            st.markdown("🔄 *First-time setup in progress*")
-            
-            # Show estimated time
-            st.markdown("⏱️ **Estimated:** 2-3 minutes")
-            st.markdown("📊 **Status:** Processing NFL data")
+            st.markdown('<span class="status-indicator status-warning"></span>**Model:** Not Trained', unsafe_allow_html=True)
+            st.markdown("🎯 *Click 'Train Model' to begin*")
         
         return page, model
 
 def route_to_page(page, model):
     if model is None:
-        # Show friendly message instead of setup instructions since training is now automatic
-        st.markdown('<div class="section-header">🔄 Model Training in Progress</div>', unsafe_allow_html=True)
-        st.markdown("""
-        <div class="info-card">
-            <h3>🏈 NFL Play Intelligence System</h3>
-            <p>Your model is being trained automatically. This happens once on first use.</p>
-            <p>Please wait while we:</p>
-            <ul>
-                <li>📊 Download real NFL data</li>
-                <li>🤖 Train the AI model</li>
-                <li>💾 Save for future use</li>
-            </ul>
-            <p><strong>This typically takes 2-3 minutes.</strong></p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.info("💡 **Tip:** Once training completes, you'll have access to all features without any additional setup!")
+        display_setup_instructions()
         return
     
     try:
@@ -109,7 +81,6 @@ def route_to_page(page, model):
         st.info("Please refresh the page or try a different section.")
 
 def main():
-    render_header()
     page, model = render_sidebar()
     
     route_to_page(page, model)
