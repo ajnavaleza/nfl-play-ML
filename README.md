@@ -12,7 +12,7 @@ This system can help offensive coordinators and analysts evaluate play-calling e
 - **Play Recommendation System**: Intelligent suggestions for optimal play types
 - **Interactive Dashboard**: Real-time simulation and visualization
 - **Opponent Analysis**: Customizable analysis based on defensive tendencies
-- **Model Explainability**: SHAP values showing key factors influencing predictions
+- **Model Explainability**: Feature importance analysis showing key factors influencing predictions
 - **Game Scenario Simulator**: Test different play calling strategies
 
 ## Tech Stack
@@ -21,7 +21,7 @@ This system can help offensive coordinators and analysts evaluate play-calling e
 - **Frontend**: Streamlit
 - **Visualization**: Plotly, Seaborn
 - **Data**: NFL play-by-play data (nflfastR format)
-- **ML Explainability**: SHAP
+- **ML Explainability**: Feature Importance Analysis
 
 ## Installation
 
@@ -59,7 +59,7 @@ The system uses NFL play-by-play data including:
 - **Gradient Boosting (XGBoost)** for expected yards prediction
 - **Feature Engineering** including formation, motion, personnel groupings
 - **Contextual Recommendations** based on game situation
-- **Model Explainability** via SHAP values
+- **Model Explainability** via feature importance analysis
 
 ## Dashboard Features
 
@@ -68,3 +68,15 @@ The system uses NFL play-by-play data including:
 - **Scenario Simulator**: Simulate full drives and outcomes
 - **Analytics Dashboard**: Visualize trends and patterns
 - **Model Insights**: Understand what drives predictions
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

@@ -5,18 +5,18 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.ensemble import RandomForestRegressor
 import xgboost as xgb
 import joblib
-import shap
 from math import sqrt
 
-class ExpectedYardsModel:    
+class ExpectedYardsModel:
+    
     def __init__(self, model_type='xgboost'):
         self.model_type = model_type
         self.model = None
         self.feature_names = None
-        self.explainer = None
         self.is_trained = False
         
     def train_model(self, X, y, feature_names=None):
+        """Train the expected yards model"""
         self.feature_names = feature_names if feature_names else list(X.columns)
         
         # split the data
@@ -67,18 +67,10 @@ class ExpectedYardsModel:
         print(f"Train R²:   {train_r2:.3f}")
         print(f"Test R²:    {test_r2:.3f}")
         
-        # initialize SHAP explainer
-        print("\ninitializing SHAP explainer...")
-        if self.model_type == 'xgboost':
-            self.explainer = shap.TreeExplainer(self.model)
-        else:
-            self.explainer = shap.TreeExplainer(self.model)
-        
         self.is_trained = True
         return self.model
     
     def predict_expected_yards(self, features_dict, play_type='pass'):
-        # predict expected yards for a given situation
         if not self.is_trained:
             raise ValueError("Model must be trained before making predictions")
         
@@ -102,7 +94,6 @@ class ExpectedYardsModel:
         return max(0, prediction)
     
     def recommend_play_type(self, features_dict):
-        # recommend optimal play type based on expected yards
         if not self.is_trained:
             raise ValueError("Model must be trained before making recommendations")
         
@@ -136,9 +127,8 @@ class ExpectedYardsModel:
         return recommendation
     
     def explain_prediction(self, features_dict, play_type='pass'):
-        # get SHAP explanation for a prediction
-        if not self.is_trained or self.explainer is None:
-            raise ValueError("Model and explainer must be initialized")
+        if not self.is_trained:
+            raise ValueError("Model must be trained first")
         
         # convert features dict to dataframe
         features_df = pd.DataFrame([features_dict])
@@ -155,29 +145,33 @@ class ExpectedYardsModel:
         # select only the features used in training
         features_df = features_df[self.feature_names]
         
-        # get SHAP values
-        shap_values = self.explainer.shap_values(features_df)
-        
-        # create explanation dictionary
+        # use feature importance-based explanation
+        feature_importance = self.get_feature_importance()
         explanation = {}
-        for i, feature in enumerate(self.feature_names):
+        
+        for feature in self.feature_names:
+            importance = feature_importance.get(feature, 0)
+            value = features_df[feature].iloc[0]
+            
+            # simple contribution calculation based on feature importance and value
+            contribution = importance * value
+            
             explanation[feature] = {
-                'value': features_df[feature].iloc[0],
-                'shap_value': shap_values[0][i],
-                'contribution': 'positive' if shap_values[0][i] > 0 else 'negative'
+                'value': value,
+                'importance_score': contribution,
+                'contribution': 'positive' if contribution > 0 else 'negative',
             }
         
-        # sort by absolute SHAP value
+        # sort by contribution magnitude
         sorted_explanation = dict(sorted(
             explanation.items(), 
-            key=lambda x: abs(x[1]['shap_value']), 
+            key=lambda x: abs(x[1]['importance_score']), 
             reverse=True
         ))
         
         return sorted_explanation
     
     def get_feature_importance(self):
-        # get feature importance from the trained model
         if not self.is_trained:
             raise ValueError("Model must be trained first")
         
@@ -188,7 +182,6 @@ class ExpectedYardsModel:
             return {}
     
     def save_model(self, filepath):
-        # save the trained model
         if not self.is_trained:
             raise ValueError("No trained model to save")
         
@@ -203,7 +196,6 @@ class ExpectedYardsModel:
         print(f"Model saved to {filepath}")
     
     def load_model(self, filepath):
-        # load a trained model
         try:
             model_data = joblib.load(filepath)
             self.model = model_data['model']
@@ -211,21 +203,12 @@ class ExpectedYardsModel:
             self.model_type = model_data['model_type']
             self.is_trained = model_data['is_trained']
             
-            # reinitialize explainer
-            if self.is_trained:
-                if self.model_type == 'xgboost':
-                    self.explainer = shap.TreeExplainer(self.model)
-                else:
-                    self.explainer = shap.TreeExplainer(self.model)
-            
             print(f"Model loaded from {filepath}")
             return True
         except Exception as e:
             print(f"Failed to load model: {e}")
             return False
 
-# Legacy function for backwards compatibility
 def train_model(X, y):
-    """legacy function - use ExpectedYardsModel class instead"""
     model = ExpectedYardsModel()
-    return model.train_model(X, y)
+    return model.train_model(X, y) 
