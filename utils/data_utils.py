@@ -1,19 +1,94 @@
 import streamlit as st
 from src.model import ExpectedYardsModel
 from src.data_processing import load_and_prepare_data
+import os
 
 @st.cache_resource
 def load_model():
+    """Load model, automatically training it if it doesn't exist"""
     try:
         model = ExpectedYardsModel()
-        if model.load_model('models/expected_yards_model.pkl'):
-            return model
-        else:
-            st.error("**Model Not Found** - No trained model detected.")
-            st.info("**Getting Started:** Run `python main.py` to train the model with automatic NFL data download.")
-            return None
+        
+        # Try to load existing model first
+        if os.path.exists('models/expected_yards_model.pkl'):
+            if model.load_model('models/expected_yards_model.pkl'):
+                return model
+        
+        # If model doesn't exist, train it automatically
+        st.info("🏈 **First Time Setup:** Training AI model automatically...")
+        trained_model = train_model_automatically()
+        return trained_model
+        
     except Exception as e:
         st.error(f"**Model Loading Error:** {str(e)}")
+        return None
+
+def train_model_automatically():
+    """Automatically train the model with progress indicators"""
+    try:
+        with st.spinner("🔄 Training NFL Play Intelligence Model..."):
+            # Create progress bar
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            # Step 1: Load and prepare data
+            status_text.text("📊 Loading NFL data from public sources...")
+            progress_bar.progress(20)
+            
+            X, y, feature_names, raw_df = load_and_prepare_data()
+            
+            # Step 2: Initialize model
+            status_text.text("🤖 Initializing XGBoost model...")
+            progress_bar.progress(40)
+            
+            model = ExpectedYardsModel(model_type='xgboost')
+            
+            # Step 3: Train model
+            status_text.text("🎯 Training model on NFL plays...")
+            progress_bar.progress(60)
+            
+            trained_model = model.train_model(X, y, feature_names)
+            
+            # Step 4: Save model
+            status_text.text("💾 Saving trained model...")
+            progress_bar.progress(80)
+            
+            os.makedirs('models', exist_ok=True)
+            model.save_model('models/expected_yards_model.pkl')
+            
+            # Step 5: Complete
+            progress_bar.progress(100)
+            status_text.text("✅ Model training complete!")
+            
+            # Show success message
+            st.success(f"""
+            🎉 **Training Complete!** 
+            
+            **Model Stats:**
+            - **Total Plays:** {len(X):,}
+            - **Features:** {len(feature_names)}
+            - **Pass Plays:** {(raw_df['play_type'] == 'pass').sum():,}
+            - **Run Plays:** {(raw_df['play_type'] == 'run').sum():,}
+            
+            Your NFL Play Intelligence System is now ready!
+            """)
+            
+            # Clear the progress indicators
+            progress_bar.empty()
+            status_text.empty()
+            
+            return model
+            
+    except Exception as e:
+        st.error(f"**Automatic Training Failed:** {str(e)}")
+        st.markdown("""
+        ### Manual Setup Option:
+        If automatic training fails, you can run manually:
+        ```bash
+        python main.py
+        ```
+        Then refresh this page.
+        """)
         return None
 
 @st.cache_data

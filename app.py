@@ -61,14 +61,36 @@ def render_sidebar():
         model = load_model()
         if model:
             st.markdown('<span class="status-indicator status-success"></span>**Model:** Ready', unsafe_allow_html=True)
+            st.markdown('<span class="status-indicator status-success"></span>**Data:** Loaded', unsafe_allow_html=True)
         else:
-            st.markdown('<span class="status-indicator status-error"></span>**Model:** Training Required', unsafe_allow_html=True)
+            st.markdown('<span class="status-indicator status-warning"></span>**Model:** Training...', unsafe_allow_html=True)
+            st.markdown("🔄 *First-time setup in progress*")
+            
+            # Show estimated time
+            st.markdown("⏱️ **Estimated:** 2-3 minutes")
+            st.markdown("📊 **Status:** Processing NFL data")
         
         return page, model
 
 def route_to_page(page, model):
-    if model is None and page != "Data Explorer":
-        display_setup_instructions()
+    if model is None:
+        # Show friendly message instead of setup instructions since training is now automatic
+        st.markdown('<div class="section-header">🔄 Model Training in Progress</div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div class="info-card">
+            <h3>🏈 NFL Play Intelligence System</h3>
+            <p>Your model is being trained automatically. This happens once on first use.</p>
+            <p>Please wait while we:</p>
+            <ul>
+                <li>📊 Download real NFL data</li>
+                <li>🤖 Train the AI model</li>
+                <li>💾 Save for future use</li>
+            </ul>
+            <p><strong>This typically takes 2-3 minutes.</strong></p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.info("💡 **Tip:** Once training completes, you'll have access to all features without any additional setup!")
         return
     
     try:
