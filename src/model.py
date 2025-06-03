@@ -8,11 +8,7 @@ import joblib
 import shap
 from math import sqrt
 
-class ExpectedYardsModel:
-    """
-    Advanced ML model for predicting expected yards and recommending plays
-    """
-    
+class ExpectedYardsModel:    
     def __init__(self, model_type='xgboost'):
         self.model_type = model_type
         self.model = None
@@ -21,15 +17,14 @@ class ExpectedYardsModel:
         self.is_trained = False
         
     def train_model(self, X, y, feature_names=None):
-        """Train the expected yards model"""
         self.feature_names = feature_names if feature_names else list(X.columns)
         
-        # Split the data
+        # split the data
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42, stratify=None
         )
         
-        # Initialize model based on type
+        # initialize model based on type
         if self.model_type == 'xgboost':
             self.model = xgb.XGBRegressor(
                 n_estimators=200,
@@ -48,15 +43,15 @@ class ExpectedYardsModel:
                 n_jobs=-1
             )
         
-        # Train the model
+        # train the model
         print("Training model...")
         self.model.fit(X_train, y_train)
         
-        # Evaluate the model
+        # evaluate the model
         train_preds = self.model.predict(X_train)
         test_preds = self.model.predict(X_test)
         
-        # Calculate metrics
+        # calculate metrics
         train_rmse = sqrt(mean_squared_error(y_train, train_preds))
         test_rmse = sqrt(mean_squared_error(y_test, test_preds))
         train_mae = mean_absolute_error(y_train, train_preds)
@@ -72,8 +67,8 @@ class ExpectedYardsModel:
         print(f"Train R²:   {train_r2:.3f}")
         print(f"Test R²:    {test_r2:.3f}")
         
-        # Initialize SHAP explainer
-        print("\nInitializing SHAP explainer...")
+        # initialize SHAP explainer
+        print("\ninitializing SHAP explainer...")
         if self.model_type == 'xgboost':
             self.explainer = shap.TreeExplainer(self.model)
         else:
@@ -83,39 +78,39 @@ class ExpectedYardsModel:
         return self.model
     
     def predict_expected_yards(self, features_dict, play_type='pass'):
-        """Predict expected yards for a given situation"""
+        # predict expected yards for a given situation
         if not self.is_trained:
             raise ValueError("Model must be trained before making predictions")
         
-        # Convert features dict to DataFrame
+        # convert features dict to dataframe
         features_df = pd.DataFrame([features_dict])
         
-        # Add play type feature
+        # add play type feature
         features_df['is_pass'] = 1 if play_type == 'pass' else 0
         features_df['is_run'] = 1 if play_type == 'run' else 0
         
-        # Ensure all required features are present
+        # ensure all required features are present
         for feature in self.feature_names:
             if feature not in features_df.columns:
                 features_df[feature] = 0
         
-        # Select only the features used in training
+        # select only the features used in training
         features_df = features_df[self.feature_names]
         
-        # Make prediction
+        # make prediction
         prediction = self.model.predict(features_df)[0]
-        return max(0, prediction)  # Ensure non-negative prediction
+        return max(0, prediction)
     
     def recommend_play_type(self, features_dict):
-        """Recommend optimal play type based on expected yards"""
+        # recommend optimal play type based on expected yards
         if not self.is_trained:
             raise ValueError("Model must be trained before making recommendations")
         
-        # Predict expected yards for both run and pass
+        # predict expected yards for both run and pass
         run_expected = self.predict_expected_yards(features_dict, 'run')
         pass_expected = self.predict_expected_yards(features_dict, 'pass')
         
-        # Create recommendation
+        # create recommendation
         recommendation = {
             'run_expected_yards': run_expected,
             'pass_expected_yards': pass_expected,
@@ -124,7 +119,7 @@ class ExpectedYardsModel:
             'confidence': 'high' if abs(pass_expected - run_expected) > 1.0 else 'moderate'
         }
         
-        # Add contextual advice
+        # add contextual advice
         down = features_dict.get('down', 1)
         ydstogo = features_dict.get('ydstogo', 10)
         yardline = features_dict.get('distance_to_goal', 50)
@@ -141,29 +136,29 @@ class ExpectedYardsModel:
         return recommendation
     
     def explain_prediction(self, features_dict, play_type='pass'):
-        """Get SHAP explanation for a prediction"""
+        # get SHAP explanation for a prediction
         if not self.is_trained or self.explainer is None:
             raise ValueError("Model and explainer must be initialized")
         
-        # Convert features dict to DataFrame
+        # convert features dict to dataframe
         features_df = pd.DataFrame([features_dict])
         
-        # Add play type feature
+        # add play type feature
         features_df['is_pass'] = 1 if play_type == 'pass' else 0
         features_df['is_run'] = 1 if play_type == 'run' else 0
         
-        # Ensure all required features are present
+        # ensure all required features are present
         for feature in self.feature_names:
             if feature not in features_df.columns:
                 features_df[feature] = 0
         
-        # Select only the features used in training
+        # select only the features used in training
         features_df = features_df[self.feature_names]
         
-        # Get SHAP values
+        # get SHAP values
         shap_values = self.explainer.shap_values(features_df)
         
-        # Create explanation dictionary
+        # create explanation dictionary
         explanation = {}
         for i, feature in enumerate(self.feature_names):
             explanation[feature] = {
@@ -172,7 +167,7 @@ class ExpectedYardsModel:
                 'contribution': 'positive' if shap_values[0][i] > 0 else 'negative'
             }
         
-        # Sort by absolute SHAP value
+        # sort by absolute SHAP value
         sorted_explanation = dict(sorted(
             explanation.items(), 
             key=lambda x: abs(x[1]['shap_value']), 
@@ -182,7 +177,7 @@ class ExpectedYardsModel:
         return sorted_explanation
     
     def get_feature_importance(self):
-        """Get feature importance from the trained model"""
+        # get feature importance from the trained model
         if not self.is_trained:
             raise ValueError("Model must be trained first")
         
@@ -193,7 +188,7 @@ class ExpectedYardsModel:
             return {}
     
     def save_model(self, filepath):
-        """Save the trained model"""
+        # save the trained model
         if not self.is_trained:
             raise ValueError("No trained model to save")
         
@@ -208,7 +203,7 @@ class ExpectedYardsModel:
         print(f"Model saved to {filepath}")
     
     def load_model(self, filepath):
-        """Load a trained model"""
+        # load a trained model
         try:
             model_data = joblib.load(filepath)
             self.model = model_data['model']
@@ -216,7 +211,7 @@ class ExpectedYardsModel:
             self.model_type = model_data['model_type']
             self.is_trained = model_data['is_trained']
             
-            # Reinitialize explainer
+            # reinitialize explainer
             if self.is_trained:
                 if self.model_type == 'xgboost':
                     self.explainer = shap.TreeExplainer(self.model)
@@ -231,6 +226,6 @@ class ExpectedYardsModel:
 
 # Legacy function for backwards compatibility
 def train_model(X, y):
-    """Legacy function - use ExpectedYardsModel class instead"""
+    """legacy function - use ExpectedYardsModel class instead"""
     model = ExpectedYardsModel()
     return model.train_model(X, y)

@@ -1,6 +1,6 @@
 # 🏈 Expected Yards & Play Calling Intelligence System
 
-An ML-powered web application that predicts expected yards gained (xY) for various play types and recommends optimal offensive plays based on down, distance, field position, and defense tendencies.
+An ML-powered web application that predicts expected yards gained for various play types and recommends optimal offensive plays based on down, distance, field position, and defense tendencies.
 
 ## Description
 
@@ -15,7 +15,7 @@ This system can help offensive coordinators and analysts evaluate play-calling e
 - **Model Explainability**: SHAP values showing key factors influencing predictions
 - **Game Scenario Simulator**: Test different play calling strategies
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Backend**: Python, XGBoost, scikit-learn
 - **Frontend**: Streamlit

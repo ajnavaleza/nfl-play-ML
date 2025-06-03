@@ -76,7 +76,7 @@ def load_sample_data():
         df = load_data('data/nfl_pbp_2021_2022.csv')
         df = clean_data(df)
         df = feature_engineering(df)
-        return df.sample(n=10000, random_state=42)  # Sample for faster processing
+        return df.sample(n=10000, random_state=42) 
     except Exception as e:
         st.error(f"Error loading data: {e}")
         return None
@@ -111,7 +111,7 @@ def main():
         data_explorer_page()
 
 def play_predictor_page(model):
-    """Main play prediction interface"""
+    # play predictor page
     st.header("🎯 Play Predictor & Recommender")
     
     col1, col2 = st.columns([1, 1])
@@ -132,14 +132,14 @@ def play_predictor_page(model):
     with col2:
         st.subheader("Prediction Results")
         
-        # Create features dictionary
+        # create features dictionary
         features = get_play_context_features(down, ydstogo, yardline, quarter, score_diff)
         
-        # Get recommendation
+        # get recommendation
         try:
             recommendation = model.recommend_play_type(features)
             
-            # Display recommendation
+            # display recommendation
             st.markdown('<div class="recommendation-box">', unsafe_allow_html=True)
             st.markdown(f"### Recommended Play: **{recommendation['recommended_play'].upper()}**")
             
@@ -153,7 +153,7 @@ def play_predictor_page(model):
             st.markdown(f"**Context Advice:** {recommendation['context_advice']}")
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # Visualization
+            # visualization
             fig = go.Figure(data=[
                 go.Bar(name='Expected Yards', 
                       x=['Run', 'Pass'], 
@@ -172,15 +172,15 @@ def play_predictor_page(model):
             st.error(f"Error making prediction: {e}")
 
 def analytics_dashboard_page():
-    """Analytics and trends dashboard"""
+    # analytics dashboard page
     st.header("📊 Analytics Dashboard")
     
-    # Load sample data
+    # load sample data
     df = load_sample_data()
     if df is None:
         return
     
-    # Key metrics
+    # key metrics
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -204,11 +204,11 @@ def analytics_dashboard_page():
         ).mean() if len(df[df['red_zone'] == 1]) > 0 else 0
         st.metric("Red Zone TD Rate", f"{red_zone_td:.1%}")
     
-    # Charts
+    # charts
     col1, col2 = st.columns(2)
     
     with col1:
-        # Yards by down
+        # yards by down
         down_yards = df.groupby('down')['yards_gained'].mean().reset_index()
         fig1 = px.bar(down_yards, x='down', y='yards_gained', 
                      title="Average Yards by Down",
@@ -216,17 +216,17 @@ def analytics_dashboard_page():
         st.plotly_chart(fig1, use_container_width=True)
     
     with col2:
-        # Yards by play type and down
+        # yards by play type and down
         play_down_yards = df.groupby(['down', 'play_type'])['yards_gained'].mean().reset_index()
         fig2 = px.bar(play_down_yards, x='down', y='yards_gained', 
                      color='play_type', barmode='group',
                      title="Average Yards by Down and Play Type")
         st.plotly_chart(fig2, use_container_width=True)
     
-    # Field position analysis
+    # field position analysis
     st.subheader("Field Position Analysis")
     
-    # Create field position bins
+    # create field position bins
     df['field_position_bin'] = pd.cut(df['distance_to_goal'], 
                                      bins=[0, 10, 20, 40, 60, 100], 
                                      labels=['Goal Line (0-10)', 'Red Zone (11-20)', 
@@ -241,15 +241,15 @@ def analytics_dashboard_page():
     st.plotly_chart(fig3, use_container_width=True)
 
 def model_insights_page(model):
-    """Model explainability and insights"""
+    # model explainability and insights
     st.header("🧠 Model Insights & Explainability")
     
-    # Feature importance
+    # feature importance
     st.subheader("Feature Importance")
     importance = model.get_feature_importance()
     
     if importance:
-        # Create DataFrame for plotting
+        # create dataframe for plotting
         feature_df = pd.DataFrame(list(importance.items())[:15], 
                                 columns=['Feature', 'Importance'])
         
@@ -258,7 +258,7 @@ def model_insights_page(model):
         fig.update_layout(yaxis={'categoryorder':'total ascending'})
         st.plotly_chart(fig, use_container_width=True)
         
-        # Feature descriptions
+        # feature descriptions
         with st.expander("Feature Descriptions"):
             feature_descriptions = {
                 'down': 'Current down (1-4)',
@@ -292,7 +292,7 @@ def model_insights_page(model):
         play_type = st.selectbox("Play Type", ["pass", "run"], key="shap_play_type")
     
     with col2:
-        # Get SHAP explanation
+        # get SHAP explanation
         features = get_play_context_features(sample_down, sample_ydstogo, sample_yardline)
         
         try:
@@ -301,7 +301,7 @@ def model_insights_page(model):
             
             st.write(f"**Predicted Expected Yards**: {predicted_yards:.2f}")
             
-            # Display top SHAP values
+            # display top SHAP values
             st.write("**Top Contributing Factors:**")
             
             shap_df = pd.DataFrame([
@@ -314,12 +314,12 @@ def model_insights_page(model):
                 for feature, data in list(explanation.items())[:8]
             ])
             
-            # Color code the SHAP values
+            # color code the SHAP values
             def color_shap_values(val):
                 if val > 0:
-                    return 'background-color: #d4edda'  # Light green
+                    return 'background-color: #d4edda'
                 else:
-                    return 'background-color: #f8d7da'  # Light red
+                    return 'background-color: #f8d7da'
             
             styled_df = shap_df.style.applymap(color_shap_values, subset=['SHAP Value'])
             st.dataframe(styled_df, use_container_width=True)
@@ -328,12 +328,12 @@ def model_insights_page(model):
             st.error(f"Error generating SHAP explanation: {e}")
 
 def scenario_simulator_page(model):
-    """Game scenario simulator"""
+    # game scenario simulator
     st.header("🎮 Scenario Simulator")
     
     st.write("Simulate different game scenarios and see how play recommendations change.")
     
-    # Predefined scenarios
+    # predefined scenarios
     scenarios = {
         "Goal Line Stand": {"down": 3, "ydstogo": 2, "yardline": 3, "quarter": 4, "score_diff": -4},
         "Two Minute Drill": {"down": 2, "ydstogo": 8, "yardline": 35, "quarter": 4, "score_diff": -3},
@@ -352,7 +352,7 @@ def scenario_simulator_page(model):
     col1, col2 = st.columns(2)
     
     with col1:
-        # Calculate indices for default values
+        # calculate indices for default values
         down_options = [1, 2, 3, 4]
         quarter_options = [1, 2, 3, 4]
         
@@ -372,7 +372,7 @@ def scenario_simulator_page(model):
                              value=st.session_state.get('score_diff', 0))
     
     with col2:
-        # Run simulation
+        # run simulation
         features = get_play_context_features(down, ydstogo, yardline, quarter, score_diff)
         
         try:
@@ -380,7 +380,7 @@ def scenario_simulator_page(model):
             
             st.markdown("### Simulation Results")
             
-            # Create gauge chart for confidence
+            # create gauge chart for confidence
             fig = go.Figure(go.Indicator(
                 mode = "gauge+number+delta",
                 value = recommendation['expected_yards_difference'],
@@ -405,7 +405,7 @@ def scenario_simulator_page(model):
             fig.update_layout(height=300)
             st.plotly_chart(fig, use_container_width=True)
             
-            # Results table
+            # results table
             results_df = pd.DataFrame([
                 {"Play Type": "Run", "Expected Yards": f"{recommendation['run_expected_yards']:.2f}"},
                 {"Play Type": "Pass", "Expected Yards": f"{recommendation['pass_expected_yards']:.2f}"}
@@ -420,10 +420,10 @@ def scenario_simulator_page(model):
             st.error(f"Error running simulation: {e}")
 
 def data_explorer_page():
-    """Data exploration interface"""
+    # data exploration interface
     st.header("📈 Data Explorer")
     
-    # Load sample data
+    # load sample data
     df = load_sample_data()
     if df is None:
         return
@@ -439,7 +439,7 @@ def data_explorer_page():
     with col3:
         st.metric("Time Period", "2021-2022")
     
-    # Data filters
+    # data filters
     st.subheader("Filter Data")
     
     col1, col2, col3 = st.columns(3)
@@ -454,7 +454,7 @@ def data_explorer_page():
                               int(df['yards_gained'].max()), 
                               (int(df['yards_gained'].min()), int(df['yards_gained'].max())))
     
-    # Apply filters
+    # apply filters
     filtered_df = df[
         (df['down'].isin(selected_downs)) &
         (df['play_type'].isin(play_types)) &
@@ -464,7 +464,7 @@ def data_explorer_page():
     
     st.write(f"Filtered dataset: {len(filtered_df):,} plays")
     
-    # Distribution plots
+    # distribution plots
     col1, col2 = st.columns(2)
     
     with col1:
@@ -479,7 +479,7 @@ def data_explorer_page():
                      title="Yards Gained by Down and Play Type")
         st.plotly_chart(fig2, use_container_width=True)
     
-    # Raw data viewer
+    # raw data viewer
     if st.checkbox("Show Raw Data"):
         st.subheader("Raw Data Sample")
         display_cols = ['down', 'ydstogo', 'yardline_100', 'play_type', 'yards_gained']
