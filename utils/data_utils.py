@@ -83,17 +83,17 @@ def train_model_with_progress():
         return False
 
 @st.cache_data
-def load_sample_data():
+def load_sample_data(full_data=False):
     try:
         with st.spinner("Loading NFL analytics data..."):
             X, y, feature_names, df = load_and_prepare_data()
-            
+            if full_data:
+                st.success(f"**Data Loaded:** {len(df):,} plays ready for analysis (full 5 seasons)")
+                return df
             sample_size = min(8000, len(df))
             sample_df = df.sample(n=sample_size, random_state=42)
-            
             st.success(f"**Data Loaded:** {len(sample_df):,} plays ready for analysis")
             return sample_df
-            
     except Exception as e:
         st.error(f"**Data Loading Error:** {str(e)}")
         st.info("**Data Source:** Automatically downloads from publicly available NFL repositories")

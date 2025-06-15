@@ -26,7 +26,8 @@ nfl/
 │   ├── analytics_dashboard.py # Data analytics and visualizations
 │   ├── model_insights.py      # Model explainability features
 │   ├── scenario_simulator.py  # Game scenario testing
-│   └── data_explorer.py       # Interactive data exploration
+│   ├── data_explorer.py       # Interactive data exploration
+│   └── player_matchup_analyzer.py  # Player-vs-player matchup analytics (NEW)
 ├── 
 └── utils/                      # Utility modules
     ├── styles.py              # CSS styling and themes
@@ -74,6 +75,12 @@ nfl/
 - Distribution analysis
 - Correlation matrices
 - Raw data viewing and download
+
+#### 6. Player Matchup Analyzer (`player_matchup_analyzer.py`)
+- Analyze individual player matchups (e.g., WR vs CB, OL vs DL)
+- Filter by situation, formation, personnel, and more
+- Visualize matchup win rates and expected outcomes
+- Data always uses the 5 most recent NFL seasons
 
 ### Utility Modules (`utils/`)
 

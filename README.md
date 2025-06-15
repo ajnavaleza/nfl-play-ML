@@ -14,6 +14,7 @@ This system can help offensive coordinators and analysts evaluate play-calling e
 - **Opponent Analysis**: Customizable analysis based on defensive tendencies
 - **Model Explainability**: Feature importance analysis showing key factors influencing predictions
 - **Game Scenario Simulator**: Test different play calling strategies
+- **Player Matchup Analyzer**: Analyze individual player-vs-player matchups (WR vs CB, OL vs DL, etc.)
 
 ## Tech Stack
 
@@ -47,7 +48,7 @@ This system can help offensive coordinators and analysts evaluate play-calling e
 
 ## Data
 
-The system uses NFL play-by-play data including:
+The system uses NFL play-by-play data from the 5 most recent seasons (auto-updating each year):
 - Down and distance
 - Field position
 - Formation and personnel
@@ -68,6 +69,7 @@ The system uses NFL play-by-play data including:
 - **Scenario Simulator**: Simulate full drives and outcomes
 - **Analytics Dashboard**: Visualize trends and patterns
 - **Model Insights**: Understand what drives predictions
+- **Player Matchup Analyzer**: Explore and visualize player-vs-player matchup outcomes and recommendations
 
 ## Contributing
 

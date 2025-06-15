@@ -6,6 +6,7 @@ from page_modules.analytics_dashboard import analytics_dashboard_page
 from page_modules.model_insights import model_insights_page
 from page_modules.scenario_simulator import scenario_simulator_page
 from page_modules.data_explorer import data_explorer_page
+from page_modules.player_matchup_analyzer import player_matchup_analyzer_page
 
 st.set_page_config(
     page_title="NFL Play Intelligence System",
@@ -32,7 +33,8 @@ def render_sidebar():
                 "Analytics Dashboard", 
                 "Model Insights",
                 "Scenario Simulator",
-                "Data Explorer"
+                "Data Explorer",
+                "Player Matchup Analyzer"
             ],
             help="Choose the analysis section you want to explore"
         )
@@ -76,6 +78,8 @@ def route_to_page(page, model):
             scenario_simulator_page(model)
         elif page == "Data Explorer":
             data_explorer_page()
+        elif page == "Player Matchup Analyzer":
+            player_matchup_analyzer_page(model)
     except Exception as e:
         st.error(f"**Page Error:** {str(e)}")
         st.info("Please refresh the page or try a different section.")

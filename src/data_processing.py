@@ -5,14 +5,15 @@ import requests
 from pathlib import Path
 import os
 import warnings
+import datetime
 warnings.filterwarnings('ignore')
 
-def download_nfl_data(years=[2021, 2020], max_samples_per_year=15000):
+def download_nfl_data(years=None, max_samples_per_year=15000):
     """
     Download NFL play-by-play data from nflfastR public repository
     
     Args:
-        years: List of years to download (default: 2021, 2020 for available data)
+        years: List of years to download (default: 5 most recent seasons)
         max_samples_per_year: Maximum number of plays to sample per year for efficiency
     
     Returns:
@@ -24,6 +25,13 @@ def download_nfl_data(years=[2021, 2020], max_samples_per_year=15000):
     base_url = "https://github.com/nflverse/nflverse-data/releases/download/pbp"
     
     all_dfs = []
+    
+    if years is None:
+        current_year = datetime.datetime.now().year
+        # NFL season is usually completed by February, so if before March, use previous year as last completed
+        if datetime.datetime.now().month < 3:
+            current_year -= 1
+        years = [current_year - i for i in range(5)]
     
     for year in years:
         url = f"{base_url}/play_by_play_{year}.parquet"
@@ -179,8 +187,8 @@ def load_nfl_data():
     Main function to load NFL data - tries public sources first, falls back to synthetic
     """
     try:
-        # Try to download NFL data from multiple years
-        df = download_nfl_data(years=[2021, 2020, 2019], max_samples_per_year=8000)
+        # Always use 5 most recent completed seasons
+        df = download_nfl_data(years=None, max_samples_per_year=8000)
         return df
     
     except Exception as e:
