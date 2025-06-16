@@ -87,16 +87,31 @@ def load_sample_data(full_data=False):
     try:
         with st.spinner("Loading NFL analytics data..."):
             X, y, feature_names, df = load_and_prepare_data()
+            
+            if df is None or len(df) == 0:
+                st.error("**Data Loading Error:** No valid data could be loaded")
+                st.info("Please check your internet connection and try again")
+                return None
+                
             if full_data:
-                st.success(f"**Data Loaded:** {len(df):,} plays ready for analysis (full 5 seasons)")
+                st.success(f"**Data Loaded:** {len(df):,} plays ready for analysis (full dataset)")
                 return df
+                
             sample_size = min(8000, len(df))
             sample_df = df.sample(n=sample_size, random_state=42)
             st.success(f"**Data Loaded:** {len(sample_df):,} plays ready for analysis")
             return sample_df
+            
     except Exception as e:
         st.error(f"**Data Loading Error:** {str(e)}")
-        st.info("**Data Source:** Automatically downloads from publicly available NFL repositories")
+        st.info("""
+        **Data Source:** NFL play-by-play data from nflfastR
+        
+        If you're seeing this error:
+        1. Check your internet connection
+        2. Try refreshing the page
+        3. If the problem persists, the data source might be temporarily unavailable
+        """)
         return None
 
 def display_setup_instructions():

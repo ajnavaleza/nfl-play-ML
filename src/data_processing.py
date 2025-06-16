@@ -6,11 +6,15 @@ from pathlib import Path
 import os
 import warnings
 import datetime
+import urllib3
+import ssl
+import certifi
+from urllib.request import urlopen
 warnings.filterwarnings('ignore')
 
 def download_nfl_data(years=None, max_samples_per_year=15000):
     """
-    Download NFL play-by-play data from nflfastR public repository
+    Download NFL play-by-play data from nflverse-data repository
     
     Args:
         years: List of years to download (default: 5 most recent seasons)
@@ -19,9 +23,9 @@ def download_nfl_data(years=None, max_samples_per_year=15000):
     Returns:
         DataFrame: Combined NFL play-by-play data
     """
-    print("🏈 Downloading NFL play-by-play data from nflfastR (publicly available)...")
+    print("🏈 Downloading NFL play-by-play data from nflverse-data...")
     
-    # nflfastR public data URLs - from nflverse-data repository
+    # Correct base URL for direct downloads from the pbp release
     base_url = "https://github.com/nflverse/nflverse-data/releases/download/pbp"
     
     all_dfs = []
@@ -33,60 +37,68 @@ def download_nfl_data(years=None, max_samples_per_year=15000):
             current_year -= 1
         years = [current_year - i for i in range(5)]
     
-    for year in years:
-        url = f"{base_url}/play_by_play_{year}.parquet"
-        
-        try:
-            print(f"  📥 Downloading {year} season data...")
-            
-            # Try parquet format first (more common in newer versions)
-            try:
-                df = pd.read_parquet(url)
-                print(f"  ✅ Downloaded {len(df):,} plays from {year} (parquet)")
-            except:
-                # Fallback to CSV format
-                csv_url = f"{base_url}/play_by_play_{year}.csv.gz"
-                df = pd.read_csv(csv_url, compression='gzip', low_memory=False)
-                print(f"  ✅ Downloaded {len(df):,} plays from {year} (csv)")
-            
-            # Filter for relevant plays immediately to save memory
-            df = df[
-                (df['play_type'].isin(['run', 'pass'])) &
-                (df['yards_gained'].notna()) &
-                (df['down'].notna()) &
-                (df['ydstogo'].notna()) &
-                (df['yardline_100'].notna())
-            ].copy()
-            
-            # Sample data for efficiency if dataset is large
-            if len(df) > max_samples_per_year:
-                df = df.sample(n=max_samples_per_year, random_state=42)
-            
-            all_dfs.append(df)
-            print(f"  ✅ Filtered to {len(df):,} relevant plays")
-            
-        except requests.exceptions.Timeout:
-            print(f"  ⚠️ Timeout downloading {year} data - skipping")
-        except requests.exceptions.RequestException as e:
-            print(f"  ⚠️ Network error downloading {year} data: {e}")
-        except Exception as e:
-            print(f"  ⚠️ Error processing {year} data: {e}")
+    print(f"Attempting to download data for years: {years}")
     
+    for year in years:
+        urls_to_try = [
+            f"{base_url}/play_by_play_{year}.parquet",
+            f"{base_url}/play_by_play_{year}.csv.gz"
+        ]
+        for url in urls_to_try:
+            try:
+                print(f"  📥 Trying URL: {url}")
+                response = requests.get(url, verify=certifi.where())
+                response.raise_for_status()
+                if response.headers.get('content-type', '').startswith('text/html'):
+                    print(f"  ⚠️ Received HTML instead of data from {url}")
+                    continue
+                import io
+                if url.endswith('.parquet'):
+                    df = pd.read_parquet(io.BytesIO(response.content))
+                elif url.endswith('.csv.gz'):
+                    df = pd.read_csv(io.BytesIO(response.content), compression='gzip', low_memory=False)
+                else:
+                    df = pd.read_csv(io.BytesIO(response.content), low_memory=False)
+                print(f"  ✅ Downloaded {len(df):,} plays from {year}")
+                print(f"  Filtering plays for {year}...")
+                df = df[
+                    (df['play_type'].isin(['run', 'pass'])) &
+                    (df['yards_gained'].notna()) &
+                    (df['down'].notna()) &
+                    (df['ydstogo'].notna()) &
+                    (df['yardline_100'].notna())
+                ].copy()
+                if len(df) > max_samples_per_year:
+                    print(f"  Sampling {max_samples_per_year:,} plays from {len(df):,} total plays")
+                    df = df.sample(n=max_samples_per_year, random_state=42)
+                all_dfs.append(df)
+                print(f"  ✅ Filtered to {len(df):,} relevant plays")
+                break
+            except requests.exceptions.SSLError as e:
+                print(f"  ⚠️ SSL Error for {url}: {str(e)}")
+                continue
+            except requests.exceptions.RequestException as e:
+                print(f"  ⚠️ Request failed for {url}: {str(e)}")
+                continue
+            except Exception as e:
+                print(f"  ⚠️ Failed to download from {url}: {str(e)}")
+                continue
     if all_dfs:
+        print("Combining data from all years...")
         combined_df = pd.concat(all_dfs, ignore_index=True)
         print(f"🎯 Total NFL plays loaded: {len(combined_df):,}")
         return combined_df
-    
-    # If no data was downloaded, try alternative sources
-    print("⚠️ Failed to download from primary source, trying alternative method...")
-    
-    # Fallback: Try to get data from a different source or use minimal sample
+    print("⚠️ Failed to download from primary sources, trying alternative method...")
     try:
-        # Try a simple CSV download from a known working URL
-        fallback_url = "https://raw.githubusercontent.com/guga31bb/nflfastR-data/master/data/play_by_play_2020.csv"
-        df = pd.read_csv(fallback_url, low_memory=False)
-        
-        # Filter and sample
+        fallback_url = f"{base_url}/play_by_play_2020.csv.gz"
+        print(f"Attempting fallback URL: {fallback_url}")
+        response = requests.get(fallback_url, verify=certifi.where())
+        response.raise_for_status()
+        if response.headers.get('content-type', '').startswith('text/html'):
+            raise Exception("Received HTML instead of data file")
+        import io
+        df = pd.read_csv(io.BytesIO(response.content), compression='gzip', low_memory=False)
+        print("Filtering fallback data...")
         df = df[
             (df['play_type'].isin(['run', 'pass'])) &
             (df['yards_gained'].notna()) &
@@ -94,107 +106,34 @@ def download_nfl_data(years=None, max_samples_per_year=15000):
             (df['ydstogo'].notna()) &
             (df['yardline_100'].notna())
         ].copy()
-        
         if len(df) > max_samples_per_year:
+            print(f"Sampling {max_samples_per_year:,} plays from fallback data")
             df = df.sample(n=max_samples_per_year, random_state=42)
-        
         print(f"✅ Downloaded {len(df):,} plays from fallback source")
         return df
-        
     except Exception as e:
         print(f"⚠️ Fallback also failed: {e}")
-    
-    raise Exception("❌ Failed to download data from any source")
-
-def create_realistic_sample_data(n_samples=10000):
-    """
-    Create realistic synthetic NFL data based on actual statistical distributions
-    """
-    print(f"🔧 Creating {n_samples:,} realistic synthetic NFL plays...")
-    
-    np.random.seed(42)
-    
-    # NFL teams for realistic data
-    nfl_teams = ['BUF', 'MIA', 'NE', 'NYJ', 'BAL', 'CIN', 'CLE', 'PIT', 
-                 'TEN', 'IND', 'HOU', 'JAX', 'KC', 'LV', 'LAC', 'DEN',
-                 'DAL', 'NYG', 'PHI', 'WAS', 'GB', 'MIN', 'CHI', 'DET',
-                 'TB', 'NO', 'ATL', 'CAR', 'LA', 'SF', 'SEA', 'ARI']
-    
-    # Create realistic play distributions
-    data = {
-        'play_type': np.random.choice(['run', 'pass'], n_samples, p=[0.42, 0.58]),
-        'down': np.random.choice([1, 2, 3, 4], n_samples, p=[0.35, 0.30, 0.25, 0.10]),
-        'quarter': np.random.choice([1, 2, 3, 4], n_samples),
-        'yardline_100': np.random.choice(range(1, 100), n_samples),
-        'score_differential': np.random.normal(0, 8, n_samples).round().astype(int),
-        'posteam': np.random.choice(nfl_teams, n_samples)
-    }
-    
-    df = pd.DataFrame(data)
-    
-    # Create realistic yards to go based on down
-    ydstogo_values = []
-    for _, row in df.iterrows():
-        if row['down'] == 1:
-            ydstogo_values.append(10)
-        elif row['down'] == 2:
-            # 2nd down typically has variable distance
-            ydstogo_values.append(np.random.choice(range(1, 21)))
-        else:
-            # 3rd and 4th down can have any distance
-            ydstogo_values.append(np.random.choice(range(1, 21)))
-    
-    df['ydstogo'] = ydstogo_values
-    
-    # Create realistic yards gained based on play type and situation
-    def generate_yards_gained(row):
-        base_yards = 4.5  # NFL average
-        
-        # Adjust for play type
-        if row['play_type'] == 'pass':
-            base_yards += 2.0  # Passes average more yards
-            variance = 9.0
-        else:
-            base_yards += 0.5
-            variance = 5.0
-        
-        # Adjust for down
-        if row['down'] == 3:
-            base_yards += 1.0  # More aggressive on 3rd down
-        elif row['down'] == 4:
-            base_yards += 2.0  # Very aggressive on 4th down
-        
-        # Adjust for field position
-        if row['yardline_100'] <= 20:  # Red zone
-            base_yards *= 0.7  # Less space, fewer yards
-        elif row['yardline_100'] >= 80:  # Own territory
-            base_yards *= 1.1  # More space for big plays
-        
-        # Generate with realistic variance
-        yards = np.random.normal(base_yards, variance)
-        
-        # Apply realistic constraints
-        yards = max(-20, min(99 - row['yardline_100'], yards))
-        return round(yards)
-    
-    df['yards_gained'] = df.apply(generate_yards_gained, axis=1)
-    
-    print(f"✅ Generated realistic synthetic data with {len(df):,} plays")
-    return df
+        print(f"Error details: {str(e)}")
+        raise Exception(f"❌ Failed to download data from any source. Error: {str(e)}")
 
 def load_nfl_data():
     """
-    Main function to load NFL data - tries public sources first, falls back to synthetic
+    Main function to load NFL data from nflverse-data
     """
     try:
+        print("Starting NFL data loading process...")
         # Always use 5 most recent completed seasons
         df = download_nfl_data(years=None, max_samples_per_year=8000)
-        return df
+        if df is not None and len(df) > 0:
+            print(f"✅ Successfully loaded {len(df):,} real NFL plays")
+            return df
+        else:
+            raise Exception("No data downloaded from primary source")
     
     except Exception as e:
         print(f"⚠️ Could not download NFL data: {e}")
-        print("🔄 Generating realistic synthetic data...")
-        return create_realistic_sample_data(n_samples=12000)
+        print(f"Error details: {str(e)}")
+        raise Exception(f"❌ Failed to load NFL data. Error: {str(e)}")
 
 def clean_and_filter_data(df):
     """
