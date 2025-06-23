@@ -1,6 +1,6 @@
 import streamlit as st
 from utils.styles import apply_custom_styles
-from utils.data_utils import load_model, display_setup_instructions
+from utils.data_utils import load_model, train_model_with_progress
 from page_modules.play_predictor import play_predictor_page
 from page_modules.analytics_dashboard import analytics_dashboard_page
 from page_modules.model_insights import model_insights_page
@@ -64,7 +64,13 @@ def render_sidebar():
 
 def route_to_page(page, model):
     if model is None:
-        display_setup_instructions()
+        st.warning("The model is not trained. Please train the model to use the app.")
+        if st.button("🎯 Train Model", type="primary", help="Start the AI model training process", use_container_width=True):
+            st.markdown("---")
+            success = train_model_with_progress()
+            if success:
+                st.balloons()
+                st.rerun()
         return
     
     try:
