@@ -63,6 +63,34 @@ def render_sidebar():
         return page, model
 
 def route_to_page(page, model):
+    # Show context cards on the home page (Play Predictor)
+    if page == "Play Predictor":
+        st.markdown("""
+        <div style="display: flex; gap: 2rem; margin-bottom: 2rem;">
+            <div style="flex: 1; background: #f1f5f9; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px #0001;">
+                <h3 style="margin-top: 0;">🏈 What is NFL Play Intelligence?</h3>
+                <p>This project is an AI-powered web app that predicts expected yards for NFL plays and recommends optimal offensive strategies. It helps coaches, analysts, and fans explore play-calling effectiveness, simulate scenarios, and analyze player matchups using real NFL data.</p>
+            </div>
+            <div style="flex: 1; background: #f8fafc; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px #0001;">
+                <h3 style="margin-top: 0;">⚙️ How Does It Work?</h3>
+                <ul>
+                    <li>Downloads real NFL play-by-play data (2021-2024) from public sources</li>
+                    <li>Engineers 30+ features (down, distance, field position, game context, etc.)</li>
+                    <li>Trains a machine learning model (XGBoost) to predict expected yards for run/pass</li>
+                    <li>Provides explainable recommendations and analytics for any game situation</li>
+                </ul>
+            </div>
+            <div style="flex: 1; background: #f1f5f9; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px #0001;">
+                <h3 style="margin-top: 0;">🚀 How to Use</h3>
+                <ol>
+                    <li>Train the model (if not already trained) using the button at the top</li>
+                    <li>Explore different pages: Play Predictor, Analytics Dashboard, Model Insights, etc.</li>
+                    <li>Input game situations to get predictions and recommendations</li>
+                    <li>Analyze trends, simulate scenarios, and dive into player matchups</li>
+                </ol>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     if model is None:
         st.warning("The model is not trained. Please train the model to use the app.")
         if st.button("🎯 Train Model", type="primary", help="Start the AI model training process", use_container_width=True):
@@ -72,7 +100,6 @@ def route_to_page(page, model):
                 st.balloons()
                 st.rerun()
         return
-    
     try:
         if page == "Play Predictor":
             play_predictor_page(model)
