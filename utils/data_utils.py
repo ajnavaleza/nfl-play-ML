@@ -83,30 +83,20 @@ def train_model_with_progress():
         return False
 
 @st.cache_data
-def load_sample_data(full_data=False):
+def load_data():
     try:
         with st.spinner("Loading NFL analytics data..."):
             X, y, feature_names, df = load_and_prepare_data()
-            
             if df is None or len(df) == 0:
                 st.error("**Data Loading Error:** No valid data could be loaded")
                 st.info("Please check your internet connection and try again")
                 return None
-                
-            if full_data:
-                st.success(f"**Data Loaded:** {len(df):,} plays ready for analysis (full dataset)")
-                return df
-                
-            sample_size = min(8000, len(df))
-            sample_df = df.sample(n=sample_size, random_state=42)
-            st.success(f"**Data Loaded:** {len(sample_df):,} plays ready for analysis")
-            return sample_df
-            
+            st.success(f"**Data Loaded:** {len(df):,} plays ready for analysis (full dataset)")
+            return df
     except Exception as e:
         st.error(f"**Data Loading Error:** {str(e)}")
         st.info("""
         **Data Source:** NFL play-by-play data from nflfastR
-        
         If you're seeing this error:
         1. Check your internet connection
         2. Try refreshing the page
@@ -164,10 +154,10 @@ def display_setup_instructions():
             <ul>
                 <li><strong>Data Source:</strong> nflfastR Public API</li>
                 <li><strong>Seasons:</strong> 2019-2021 NFL Data</li>
-                <li><strong>Sample Size:</strong> 20,000+ Real Plays</li>
+                <li><strong>Data Volume:</strong> 20,000+ Real Plays</li>
                 <li><strong>Algorithm:</strong> XGBoost Regression</li>
                 <li><strong>Features:</strong> 37 Engineered Variables</li>
-            <ul>
+            </ul>
         </div>
         """, unsafe_allow_html=True)
         

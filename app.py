@@ -44,7 +44,7 @@ def render_sidebar():
         st.markdown("### Data Information")
         st.markdown("""
         **Source:** nflfastR Public Repository  
-        **Coverage:** NFL Seasons 2019-2021  
+        **Coverage:** NFL Seasons 2021-2024  
         **Size:** Automatically downloaded  
         **Updates:** Real-time from public APIs
         """)

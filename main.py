@@ -3,37 +3,14 @@ from src.model import ExpectedYardsModel
 import os
 
 def main():
-    print("🏈 Expected Yards & Play Calling Intelligence System")
-    print("📊 Powered by Real NFL Data from nflfastR")
-    print("=" * 70)
-    
     try:
         # load and prepare all data using the streamlined pipeline
-        print("\nLoading and preparing NFL data...")
         X, y, feature_names, raw_df = load_and_prepare_data()
         
-        print(f"\nDataset Summary:")
-        print(f"   • Total plays: {len(X):,}")
-        print(f"   • Features: {len(feature_names)}")
-        print(f"   • Average yards/play: {y.mean():.2f}")
-        print(f"   • Pass plays: {(raw_df['play_type'] == 'pass').sum():,} ({(raw_df['play_type'] == 'pass').mean():.1%})")
-        print(f"   • Run plays: {(raw_df['play_type'] == 'run').sum():,} ({(raw_df['play_type'] == 'run').mean():.1%})")
-        
-        print("\nTraining Expected Yards Model with XGBoost...")
         model = ExpectedYardsModel(model_type='xgboost')
         trained_model = model.train_model(X, y, feature_names)
         
-        print("\nSaving trained model...")
-        os.makedirs('models', exist_ok=True)
         model.save_model('models/expected_yards_model.pkl')
-        
-        print("\nTop 15 Most Important Features:")
-        importance = model.get_feature_importance()
-        for i, (feature, score) in enumerate(list(importance.items())[:15]):
-            print(f"{i+1:2d}. {feature:<25} {score:.4f}")
-        
-        print("\nTesting Model Predictions...")
-        print("-" * 50)
         
         test_scenarios = [
             {
@@ -57,39 +34,8 @@ def main():
         for scenario in test_scenarios:
             features = get_play_features(**scenario['params'])
             recommendation = model.recommend_play_type(features)
-            
-            print(f"\n {scenario['name']}:")
-            print(f"   Recommended: {recommendation['recommended_play'].upper()}")
-            print(f"   Run expected: {recommendation['run_expected_yards']:.2f} yards")
-            print(f"   Pass expected: {recommendation['pass_expected_yards']:.2f} yards")
-            print(f"   Confidence: {recommendation['confidence'].title()}")
-            print(f"   Strategy: {recommendation['context_advice']}")
-        
-        print("\n" + "=" * 70)
-        print("Model Training Complete")
-        print("\nData Source Information:")
-        print("   • Data automatically downloaded from nflfastR public repository")
-        print("   • Uses recent NFL seasons (2022-2023) for current relevance") 
-        print("   • Falls back to realistic synthetic data if download fails")
-        print("   • No large CSV files required!")
-        
-        print(f"\nNext Steps:")
-        print(f"   1. Run 'streamlit run app.py' to launch the web dashboard")
-        print(f"   2. Explore play recommendations and analytics")
-        print(f"   3. Test different game scenarios")
-        
-        print(f"\nThe model uses {len(feature_names)} advanced features including:")
-        print(f"   • Down, distance, and field position")
-        print(f"   • Game context (score, quarter)")
-        print(f"   • Situational awareness (red zone, passing down, etc.)")
-        print(f"   • Advanced play type recognition")
         
     except Exception as e:
-        print(f"\n❌ Error during training: {e}")
-        print("\nTroubleshooting:")
-        print("   • Check internet connection for data download")
-        print("   • Ensure all required packages are installed")
-        print("   • Try running 'pip install -r requirements.txt'")
         return False
     
     return True

@@ -44,7 +44,6 @@ class ExpectedYardsModel:
             )
         
         # train the model
-        print("Training model...")
         self.model.fit(X_train, y_train)
         
         # evaluate the model
@@ -58,14 +57,6 @@ class ExpectedYardsModel:
         test_mae = mean_absolute_error(y_test, test_preds)
         train_r2 = r2_score(y_train, train_preds)
         test_r2 = r2_score(y_test, test_preds)
-        
-        print(f"\n=== Model Performance ===")
-        print(f"Train RMSE: {train_rmse:.3f} yards")
-        print(f"Test RMSE:  {test_rmse:.3f} yards")
-        print(f"Train MAE:  {train_mae:.3f} yards")
-        print(f"Test MAE:   {test_mae:.3f} yards")
-        print(f"Train R²:   {train_r2:.3f}")
-        print(f"Test R²:    {test_r2:.3f}")
         
         self.is_trained = True
         return self.model
@@ -193,7 +184,6 @@ class ExpectedYardsModel:
         }
         
         joblib.dump(model_data, filepath)
-        print(f"Model saved to {filepath}")
     
     def load_model(self, filepath):
         try:
@@ -203,10 +193,8 @@ class ExpectedYardsModel:
             self.model_type = model_data['model_type']
             self.is_trained = model_data['is_trained']
             
-            print(f"Model loaded from {filepath}")
             return True
         except Exception as e:
-            print(f"Failed to load model: {e}")
             return False
 
 def train_model(X, y):

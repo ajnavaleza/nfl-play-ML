@@ -93,7 +93,6 @@ nfl/
 
 #### 2. Data Utils (`data_utils.py`) - 81 lines
 - Model loading and caching
-- Sample data management
 - Setup instructions display
 - Error handling for data operations
 

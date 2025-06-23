@@ -1,17 +1,11 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from utils.data_utils import load_sample_data
+from utils.data_utils import load_data
 
 def data_explorer_page():
     st.markdown('<div class="section-header">Data Explorer</div>', unsafe_allow_html=True)
     st.markdown("Interactive exploration and analysis of NFL play-by-play data")
-    
-    # load sample data
-    df = load_sample_data()
-    if df is None:
-        st.error("**Data Unavailable** - Unable to load exploration data")
-        return
     
     # dataset overview
     st.markdown('<div class="subsection-header">Dataset Overview</div>', unsafe_allow_html=True)
@@ -160,41 +154,14 @@ def data_explorer_page():
         st.plotly_chart(fig_corr, use_container_width=True)
     
     # enhanced raw data viewer
-    if st.checkbox("Show Detailed Data Sample"):
-        st.markdown('<div class="subsection-header">Raw Data Sample</div>', unsafe_allow_html=True)
-        
-        # column selection for display
-        display_cols = ['down', 'ydstogo', 'distance_to_goal', 'play_type', 'yards_gained']
-        if 'quarter' in filtered_df.columns:
-            display_cols.append('quarter')
-        if 'score_diff' in filtered_df.columns:
-            display_cols.append('score_diff')
-        
-        available_display_cols = [col for col in display_cols if col in filtered_df.columns]
-        
-        # sample size control
-        sample_size = st.slider("Sample Size", 10, 500, 100, help="Number of plays to display")
-        
-        # display sample
-        sample_df = filtered_df[available_display_cols].head(sample_size)
-        st.dataframe(sample_df, use_container_width=True, height=400)
-        
-        # enhanced download functionality
-        col1, col2 = st.columns([1, 1])
-        
-        with col1:
-            # download filtered data
-            csv = sample_df.to_csv(index=False)
-            st.download_button(
-                label="Download Sample as CSV",
-                data=csv,
-                file_name="nfl_plays_sample.csv",
-                mime="text/csv",
-                help="Download the displayed sample data"
-            )
-        
-        with col2:
-            # data summary statistics
-            if st.button("Show Summary Statistics"):
-                st.subheader("Summary Statistics")
-                st.dataframe(sample_df.describe(), use_container_width=True) 
+    st.markdown('<div class="subsection-header">Filtered Data</div>', unsafe_allow_html=True)
+    st.dataframe(filtered_df[available_cols], use_container_width=True, height=400)
+    csv = filtered_df[available_cols].to_csv(index=False)
+    st.download_button(
+        label="Download Data as CSV",
+        data=csv,
+        file_name="nfl_plays_filtered.csv",
+        mime="text/csv",
+        help="Download the displayed filtered data"
+    )
+    st.dataframe(filtered_df[available_cols].describe(), use_container_width=True) 

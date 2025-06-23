@@ -1,17 +1,11 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from utils.data_utils import load_sample_data
+from utils.data_utils import load_data
 
 def analytics_dashboard_page():
     st.markdown('<div class="section-header">Analytics Dashboard</div>', unsafe_allow_html=True)
     st.markdown("Comprehensive analysis of NFL play-calling trends and effectiveness")
-    
-    # load sample data
-    df = load_sample_data()
-    if df is None:
-        st.error("**Data Unavailable** - Unable to load analytics data")
-        return
     
     # key performance indicators
     st.markdown('<div class="subsection-header">Key Performance Indicators</div>', unsafe_allow_html=True)

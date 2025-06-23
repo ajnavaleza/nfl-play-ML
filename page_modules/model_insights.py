@@ -100,17 +100,16 @@ def model_insights_page(model):
     with col1:
         st.markdown("**Configure Analysis Scenario:**")
         
-        sample_down = st.selectbox("Down", [1, 2, 3, 4], key="insights_down")
-        sample_ydstogo = st.slider("Yards to Go", 1, 25, 10, key="insights_ydstogo")
-        sample_yardline = st.slider("Distance to Goal", 1, 99, 50, key="insights_yardline")
-        sample_quarter = st.selectbox("Quarter", [1, 2, 3, 4], key="insights_quarter")
-        sample_score = st.slider("Score Differential", -21, 21, 0, key="insights_score")
+        input_down = st.selectbox("Down", [1, 2, 3, 4], key="insights_down")
+        input_ydstogo = st.slider("Yards to Go", 1, 25, 10, key="insights_ydstogo")
+        input_yardline = st.slider("Distance to Goal", 1, 99, 50, key="insights_yardline")
+        input_quarter = st.selectbox("Quarter", [1, 2, 3, 4], key="insights_quarter")
+        input_score = st.slider("Score Differential", -21, 21, 0, key="insights_score")
         play_type = st.selectbox("Analyze Play Type", ["pass", "run"], key="insights_play_type")
     
     with col2:
         # generate explanation
-        features = get_play_features(sample_down, sample_ydstogo, sample_yardline, 
-                                   sample_quarter, sample_score)
+        features = get_play_features(input_down, input_ydstogo, input_yardline, input_quarter, input_score)
         
         try:
             explanation = model.explain_prediction(features, play_type)

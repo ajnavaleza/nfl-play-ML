@@ -1,49 +1,89 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from utils.data_utils import load_sample_data
+from utils.data_utils import load_data
+from src.data_processing import get_player_plays
+
+@st.cache_data
+def get_filtered_player_df(df, team, _unused, player):
+    # Filter for selected team and player (ignore position)
+    player_df = pd.DataFrame()
+    if 'receiver_player_name' in df.columns:
+        player_df = pd.concat([
+            player_df,
+            df[(df['posteam'] == team) & (df['receiver_player_name'] == player)]
+        ])
+    if 'rusher_player_name' in df.columns:
+        player_df = pd.concat([
+            player_df,
+            df[(df['posteam'] == team) & (df['rusher_player_name'] == player)]
+        ])
+    return player_df
 
 def player_matchup_analyzer_page(model):
     st.markdown('<div class="section-header">Player Performance Analyzer</div>', unsafe_allow_html=True)
     st.markdown("Analyze individual player performance across different game situations and matchups")
 
     # Load data
-    df = load_sample_data(full_data=True)
+    df = load_data()
     if df is None:
         st.error("**Data Unavailable** - Unable to load player data.")
         return
+    # Use player-centric filtering
+    df = get_player_plays(df)
 
-    # Build a unified player list from both receiver and rusher columns
-    player_cols = []
-    if 'receiver_player_name' in df.columns:
-        player_cols.append('receiver_player_name')
-    if 'rusher_player_name' in df.columns:
-        player_cols.append('rusher_player_name')
-    if not player_cols:
-        st.error("No player columns found in data.")
-        return
+    # --- NFL Division Mapping ---
+    nfl_divisions = {
+        'AFC East': ['BUF', 'MIA', 'NE', 'NYJ'],
+        'AFC North': ['BAL', 'CIN', 'CLE', 'PIT'],
+        'AFC South': ['HOU', 'IND', 'JAX', 'TEN'],
+        'AFC West': ['DEN', 'KC', 'LV', 'LAC'],
+        'NFC East': ['DAL', 'NYG', 'PHI', 'WAS'],
+        'NFC North': ['CHI', 'DET', 'GB', 'MIN'],
+        'NFC South': ['ATL', 'CAR', 'NO', 'TB'],
+        'NFC West': ['ARI', 'LAR', 'SF', 'SEA']
+    }
+    team_to_division = {team: div for div, teams in nfl_divisions.items() for team in teams}
 
-    # Get all unique player names (excluding NaN)
+    # --- Extract all unique teams from posteam column ---
+    all_teams = sorted(df['posteam'].dropna().unique()) if 'posteam' in df.columns else []
+
+    # --- Extract all unique positions from receiver/rusher columns ---
+    position_cols = []
+    if 'receiver_player_position' in df.columns:
+        position_cols.append('receiver_player_position')
+    if 'rusher_player_position' in df.columns:
+        position_cols.append('rusher_player_position')
+    all_positions = set()
+    for col in position_cols:
+        all_positions.update(df[col].dropna().unique())
+    all_positions = sorted(all_positions)
+
+    # --- Division selection ---
+    division_options = sorted(nfl_divisions.keys())
+    selected_division = st.selectbox("Select Division", division_options, help="Choose an NFL division")
+
+    # --- Team selection (filtered by division) ---
+    division_teams = nfl_divisions[selected_division]
+    available_teams = [team for team in all_teams if team in division_teams]
+    selected_team = st.selectbox("Select Team", available_teams, help="Choose a team in the selected division")
+
+    # --- Player selection (filtered by team only) ---
     player_names = set()
-    for col in player_cols:
-        player_names.update(df[col].dropna().unique())
+    if 'receiver_player_name' in df.columns:
+        player_names.update(df[df['posteam'] == selected_team]['receiver_player_name'].dropna().unique())
+    if 'rusher_player_name' in df.columns:
+        player_names.update(df[df['posteam'] == selected_team]['rusher_player_name'].dropna().unique())
     player_names = sorted(player_names)
-
-    # Search bar for player selection
-    search_query = st.text_input(
-        "Search for Player to Analyze",
-        "",
-        help="Type a player's name to search for their stats"
-    )
-    filtered_players = [p for p in player_names if search_query.lower() in p.lower()]
-    if not filtered_players and search_query:
-        st.warning(f"No players found matching '{search_query}'")
+    if not player_names:
+        st.warning(f"No players found for {selected_team}")
         return
-    selected_player = st.selectbox(
-        "Select Player from Results",
-        filtered_players if filtered_players else player_names,
-        help="Select a player from the search results"
-    )
+    selected_player = st.selectbox("Select Player", player_names, help="Choose a player on the selected team")
+    if not selected_player:
+        return
+
+    # --- Use cached filtered player DataFrame ---
+    player_df = get_filtered_player_df(df, selected_team, None, selected_player)
 
     # Season selection (only if season data is available)
     if 'season' in df.columns:
