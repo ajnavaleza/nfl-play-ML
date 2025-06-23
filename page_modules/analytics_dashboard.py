@@ -4,6 +4,10 @@ import plotly.express as px
 from utils.data_utils import load_data
 
 def analytics_dashboard_page():
+    df = load_data()
+    if df is None:
+        st.error("**Data Unavailable** - Unable to load analytics data")
+        return
     st.markdown('<div class="section-header">Analytics Dashboard</div>', unsafe_allow_html=True)
     st.markdown("Comprehensive analysis of NFL play-calling trends and effectiveness")
     

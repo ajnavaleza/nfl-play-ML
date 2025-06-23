@@ -4,6 +4,10 @@ import plotly.express as px
 from utils.data_utils import load_data
 
 def data_explorer_page():
+    df = load_data()
+    if df is None:
+        st.error("**Data Unavailable** - Unable to load exploration data")
+        return
     st.markdown('<div class="section-header">Data Explorer</div>', unsafe_allow_html=True)
     st.markdown("Interactive exploration and analysis of NFL play-by-play data")
     
