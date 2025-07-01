@@ -24,28 +24,6 @@ This system can help offensive coordinators and analysts evaluate play-calling e
 - **Data**: NFL play-by-play data (nflfastR format)
 - **ML Explainability**: Feature Importance Analysis
 
-## Installation
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Usage
-
-1. **Train the model**:
-   ```bash
-   python main.py
-   ```
-
-2. **Launch the web app**:
-   ```bash
-   streamlit run app.py
-   ```
-
-3. **Access the dashboard** at `http://localhost:8501`
-
 ## Data
 
 The system uses NFL play-by-play data from the 5 most recent seasons (auto-updating each year):
